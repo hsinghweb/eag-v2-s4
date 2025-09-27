@@ -21,7 +21,35 @@ genai.configure(api_key=api_key)
 # Initialize the model
 model = genai.GenerativeModel('gemini-2.5-pro')
 
-max_iterations = 3
+# Constants
+MAX_ITERATIONS = 3
+
+# System prompt template (to be formatted with tools_description)
+SYSTEM_PROMPT_TEMPLATE = """You are a math agent solving problems in iterations. You have access to various mathematical tools.
+
+Available tools:
+{tools_description}
+
+You must respond with EXACTLY ONE line in one of these formats (no additional text):
+1. For function calls:
+   FUNCTION_CALL: function_name|param1|param2|...
+   
+2. For final answers:
+   FINAL_ANSWER: [number]
+
+Important:
+- When a function returns multiple values, you need to process all of them
+- Only give FINAL_ANSWER when you have completed all necessary calculations
+- Do not repeat function calls with the same parameters
+
+Examples:
+- FUNCTION_CALL: add|5|3
+- FUNCTION_CALL: strings_to_chars_to_int|INDIA
+- FINAL_ANSWER: [42]
+
+DO NOT include any explanations or additional text.
+Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
+
 last_response = None
 iteration = 0
 iteration_response = []
@@ -78,8 +106,8 @@ async def main():
                 tools = tools_result.tools
                 print(f"Successfully retrieved {len(tools)} tools")
 
-                # Create system prompt with available tools
-                print("Creating system prompt...")
+                # Create tools description
+                print("Creating tools description...")
                 print(f"Number of tools: {len(tools)}")
                 
                 try:
@@ -114,40 +142,17 @@ async def main():
                     print(f"Error creating tools description: {e}")
                     tools_description = "Error loading tools"
                 
+                # Format system prompt with tools description
+                system_prompt = SYSTEM_PROMPT_TEMPLATE.format(tools_description=tools_description)
                 print("Created system prompt...")
                 
-                system_prompt = f"""You are a math agent solving problems in iterations. You have access to various mathematical tools.
-
-Available tools:
-{tools_description}
-
-You must respond with EXACTLY ONE line in one of these formats (no additional text):
-1. For function calls:
-   FUNCTION_CALL: function_name|param1|param2|...
-   
-2. For final answers:
-   FINAL_ANSWER: [number]
-
-Important:
-- When a function returns multiple values, you need to process all of them
-- Only give FINAL_ANSWER when you have completed all necessary calculations
-- Do not repeat function calls with the same parameters
-
-Examples:
-- FUNCTION_CALL: add|5|3
-- FUNCTION_CALL: strings_to_chars_to_int|INDIA
-- FINAL_ANSWER: [42]
-
-DO NOT include any explanations or additional text.
-Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
-
                 query = """Find the ASCII values of characters in HIMANSHU and then return sum of exponentials of those values. """
                 print("Starting iteration loop...")
                 
                 # Use global iteration variables
                 global iteration, last_response
                 
-                while iteration < max_iterations:
+                while iteration < MAX_ITERATIONS:
                     print(f"\n--- Iteration {iteration + 1} ---")
                     if last_response is None:
                         current_query = query
@@ -173,7 +178,6 @@ Your entire response should be a single line starting with either FUNCTION_CALL:
                     except Exception as e:
                         print(f"Failed to get LLM response: {e}")
                         break
-
 
                     if response_text.startswith("FUNCTION_CALL:"):
                         _, function_info = response_text.split(":", 1)
