@@ -41,7 +41,7 @@ genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-2.5-pro')
 
 # Constants
-MAX_ITERATIONS = 3
+MAX_ITERATIONS = 5
 
 # System prompt template (to be formatted with tools_description)
 SYSTEM_PROMPT_TEMPLATE = """You are a math agent solving problems in iterations. You have access to various mathematical tools.
