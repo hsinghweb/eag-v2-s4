@@ -1,4 +1,4 @@
-# basic import 
+import os
 from mcp.server.fastmcp import FastMCP, Image
 from mcp.server.fastmcp.prompts import base
 from mcp.types import TextContent
@@ -13,7 +13,6 @@ import time
 from win32api import GetSystemMetrics
 from pptx import Presentation
 from pptx.util import Inches
-import os
 from pptx.dml.color import RGBColor
 from pptx.util import Pt
 from tools import (
@@ -31,120 +30,138 @@ from tools import (
     calculate_salary_for_name,
     calculate_percentage,
 )
+import logging
+from datetime import datetime
+import traceback
 
-# instantiate an MCP server client
+# Configure logging
+log_dir = "logs"
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, f"mcp_server_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Instantiate an MCP server client
 mcp = FastMCP("Calculator")
 
 # DEFINE TOOLS
 
-#addition tool
+# Addition tool
 @mcp.tool()
 def add(a: int, b: int) -> int:
     """Add two numbers"""
-    print("CALLED: add(a: int, b: int) -> int:")
+    logger.info(f"Calling add(a: {a}, b: {b}) -> int")
     return int(a + b)
 
 @mcp.tool()
 def add_list(l: list) -> int:
     """Add all numbers in a list"""
-    print("CALLED: add(l: list) -> int:")
+    logger.info(f"Calling add_list(l: {l}) -> int")
     return sum(l)
 
-# subtraction tool
+# Subtraction tool
 @mcp.tool()
 def subtract(a: int, b: int) -> int:
     """Subtract two numbers"""
-    print("CALLED: subtract(a: int, b: int) -> int:")
+    logger.info(f"Calling subtract(a: {a}, b: {b}) -> int")
     return int(a - b)
 
-# multiplication tool
+# Multiplication tool
 @mcp.tool()
 def multiply(a: int, b: int) -> int:
     """Multiply two numbers"""
-    print("CALLED: multiply(a: int, b: int) -> int:")
+    logger.info(f"Calling multiply(a: {a}, b: {b}) -> int")
     return int(a * b)
 
-#  division tool
+# Division tool
 @mcp.tool() 
 def divide(a: int, b: int) -> float:
     """Divide two numbers"""
-    print("CALLED: divide(a: int, b: int) -> float:")
+    logger.info(f"Calling divide(a: {a}, b: {b}) -> float")
     return float(a / b)
 
-# power tool
+# Power tool
 @mcp.tool()
 def power(a: int, b: int) -> int:
     """Power of two numbers"""
-    print("CALLED: power(a: int, b: int) -> int:")
+    logger.info(f"Calling power(a: {a}, b: {b}) -> int")
     return int(a ** b)
 
-# square root tool
+# Square root tool
 @mcp.tool()
 def sqrt(a: int) -> float:
     """Square root of a number"""
-    print("CALLED: sqrt(a: int) -> float:")
+    logger.info(f"Calling sqrt(a: {a}) -> float")
     return float(a ** 0.5)
 
-# cube root tool
+# Cube root tool
 @mcp.tool()
 def cbrt(a: int) -> float:
     """Cube root of a number"""
-    print("CALLED: cbrt(a: int) -> float:")
+    logger.info(f"Calling cbrt(a: {a}) -> float")
     return float(a ** (1/3))
 
-# factorial tool
+# Factorial tool
 @mcp.tool()
 def factorial(a: int) -> int:
-    """factorial of a number"""
-    print("CALLED: factorial(a: int) -> int:")
+    """Factorial of a number"""
+    logger.info(f"Calling factorial(a: {a}) -> int")
     return int(math.factorial(a))
 
-# log tool
+# Log tool
 @mcp.tool()
 def log(a: int) -> float:
-    """log of a number"""
-    print("CALLED: log(a: int) -> float:")
+    """Log of a number"""
+    logger.info(f"Calling log(a: {a}) -> float")
     return float(math.log(a))
 
-# remainder tool
+# Remainder tool
 @mcp.tool()
 def remainder(a: int, b: int) -> int:
-    """remainder of two numbers divison"""
-    print("CALLED: remainder(a: int, b: int) -> int:")
+    """Remainder of two numbers division"""
+    logger.info(f"Calling remainder(a: {a}, b: {b}) -> int")
     return int(a % b)
 
-# sin tool
+# Sin tool
 @mcp.tool()
 def sin(a: int) -> float:
-    """sin of a number"""
-    print("CALLED: sin(a: int) -> float:")
+    """Sin of a number"""
+    logger.info(f"Calling sin(a: {a}) -> float")
     return float(math.sin(a))
 
-# cos tool
+# Cos tool
 @mcp.tool()
 def cos(a: int) -> float:
-    """cos of a number"""
-    print("CALLED: cos(a: int) -> float:")
+    """Cos of a number"""
+    logger.info(f"Calling cos(a: {a}) -> float")
     return float(math.cos(a))
 
-# tan tool
+# Tan tool
 @mcp.tool()
 def tan(a: int) -> float:
-    """tan of a number"""
-    print("CALLED: tan(a: int) -> float:")
+    """Tan of a number"""
+    logger.info(f"Calling tan(a: {a}) -> float")
     return float(math.tan(a))
 
-# mine tool
+# Mine tool
 @mcp.tool()
 def mine(a: int, b: int) -> int:
-    """special mining tool"""
-    print("CALLED: mine(a: int, b: int) -> int:")
+    """Special mining tool"""
+    logger.info(f"Calling mine(a: {a}, b: {b}) -> int")
     return int(a - b - b)
 
 @mcp.tool()
 def create_thumbnail(image_path: str) -> Image:
     """Create a thumbnail from an image"""
-    print("CALLED: create_thumbnail(image_path: str) -> Image:")
+    logger.info(f"Calling create_thumbnail(image_path: {image_path}) -> Image")
     img = PILImage.open(image_path)
     img.thumbnail((100, 100))
     return Image(data=img.tobytes(), format="png")
@@ -152,19 +169,19 @@ def create_thumbnail(image_path: str) -> Image:
 @mcp.tool()
 def strings_to_chars_to_int(string: str) -> list[int]:
     """Return the ASCII values of the characters in a word"""
-    print("CALLED: strings_to_chars_to_int(string: str) -> list[int]:")
+    logger.info(f"Calling strings_to_chars_to_int(string: {string}) -> list[int]")
     return [int(ord(char)) for char in string]
 
 @mcp.tool()
 def int_list_to_exponential_sum(int_list: list) -> float:
     """Return sum of exponentials of numbers in a list"""
-    print("CALLED: int_list_to_exponential_sum(int_list: list) -> float:")
+    logger.info(f"Calling int_list_to_exponential_sum(int_list: {int_list}) -> float")
     return sum(math.exp(i) for i in int_list)
 
 @mcp.tool()
 def fibonacci_numbers(n: int) -> list:
     """Return the first n Fibonacci Numbers"""
-    print("CALLED: fibonacci_numbers(n: int) -> list:")
+    logger.info(f"Calling fibonacci_numbers(n: {n}) -> list")
     if n <= 0:
         return []
     fib_sequence = [0, 1]
@@ -176,10 +193,12 @@ def fibonacci_numbers(n: int) -> list:
 async def close_powerpoint() -> dict:
     """Close PowerPoint"""
     try:
+        logger.info("Calling close_powerpoint()")
         # Close PowerPoint
         os.system('taskkill /F /IM POWERPNT.EXE')
         time.sleep(2)
         
+        logger.info("PowerPoint closed successfully")
         return {
             "content": [
                 TextContent(
@@ -189,7 +208,8 @@ async def close_powerpoint() -> dict:
             ]
         }
     except Exception as e:
-        print(f"Error in close_powerpoint: {str(e)}")
+        logger.error(f"Error in close_powerpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         return {
             "content": [
                 TextContent(
@@ -203,6 +223,7 @@ async def close_powerpoint() -> dict:
 async def open_powerpoint() -> dict:
     """Open a new PowerPoint presentation"""
     try:
+        logger.info("Calling open_powerpoint()")
         # Close any existing PowerPoint instances
         await close_powerpoint()
         time.sleep(3)  # Increased wait time
@@ -223,6 +244,7 @@ async def open_powerpoint() -> dict:
         os.startfile(filename)
         time.sleep(10)  # Increased wait time for PowerPoint to open
         
+        logger.info("PowerPoint opened successfully with a new presentation")
         return {
             "content": [
                 TextContent(
@@ -232,7 +254,8 @@ async def open_powerpoint() -> dict:
             ]
         }
     except Exception as e:
-        print(f"Error in open_powerpoint: {str(e)}")
+        logger.error(f"Error in open_powerpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         return {
             "content": [
                 TextContent(
@@ -246,7 +269,7 @@ async def open_powerpoint() -> dict:
 async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
     """Draw a rectangle in the first slide of PowerPoint"""
     try:
-        print(f"[MCP Tool] Drawing rectangle with raw parameters: x1={x1} ({type(x1)}), y1={y1} ({type(y1)}), x2={x2} ({type(x2)}), y2={y2} ({type(y2)})")
+        logger.info(f"Drawing rectangle with parameters: x1={x1} ({type(x1)}), y1={y1} ({type(y1)}), x2={x2} ({type(x2)}), y2={y2} ({type(y2)})")
         
         # Convert parameters to integers
         try:
@@ -256,20 +279,20 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
             y2 = int(float(str(y2)))
         except (ValueError, TypeError) as e:
             error_msg = f"Failed to convert parameters to integers: {str(e)}"
-            print(f"{error_msg}")
+            logger.error(error_msg)
             return {"content": [TextContent(type="text", text=error_msg)]}
 
-        print(f"[MCP Tool] Converted coordinates: ({x1},{y1}) to ({x2},{y2})")
+        logger.debug(f"Converted coordinates: ({x1},{y1}) to ({x2},{y2})")
         
         # Validate coordinates
         if not (1 <= x1 <= 8 and 1 <= y1 <= 8 and 1 <= x2 <= 8 and 1 <= y2 <= 8):
             error_msg = f"Coordinates must be between 1 and 8, got: ({x1},{y1}) to ({x2},{y2})"
-            print(f"{error_msg}")
+            logger.error(error_msg)
             return {"content": [TextContent(type="text", text=error_msg)]}
         
         if x2 <= x1 or y2 <= y1:
             error_msg = f"End coordinates must be greater than start coordinates: ({x1},{y1}) to ({x2},{y2})"
-            print(f"{error_msg}")
+            logger.error(error_msg)
             return {"content": [TextContent(type="text", text=error_msg)]}
         
         # Wait before modifying the presentation
@@ -307,7 +330,7 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
             width = Inches(x2 - x1)
             height = Inches(y2 - y1)
             
-            print(f"[MCP Tool] Rectangle dimensions - left={left}, top={top}, width={width}, height={height}")
+            logger.debug(f"Rectangle dimensions - left={left}, top={top}, width={width}, height={height}")
             
             # Add rectangle
             shape = slide.shapes.add_shape(
@@ -329,7 +352,7 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
             os.startfile('presentation.pptx')
             time.sleep(5)
             
-            print("[MCP Tool] Rectangle drawn successfully")
+            logger.info(f"Rectangle drawn successfully from ({x1},{y1}) to ({x2},{y2})")
             return {
                 "content": [
                     TextContent(
@@ -341,25 +364,23 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
             
         except Exception as e:
             error_msg = f"PowerPoint operation failed: {str(e)}"
-            print(f"{error_msg}")
+            logger.error(error_msg)
             return {"content": [TextContent(type="text", text=error_msg)]}
             
     except Exception as e:
         error_msg = f"Error in draw_rectangle: {str(e)}"
-        print(f"{error_msg}")
-        print(f"[MCP Tool] Error type: {type(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
         return {"content": [TextContent(type="text", text=error_msg)]}
 
 @mcp.tool()
 async def add_text_in_powerpoint(text: str) -> dict:
     """Add text to the first slide of PowerPoint"""
     try:
-        print(f"[MCP Tool] Received text to add: {text}")
-        print(f"[MCP Tool] Text type: {type(text)}")
-        print(f"[MCP Tool] Text length: {len(text)}")
-        print(f"[MCP Tool] Text contains newlines: {'\\n' in text}")
+        logger.info(f"Received text to add: {text}")
+        logger.debug(f"Text type: {type(text)}")
+        logger.debug(f"Text length: {len(text)}")
+        logger.debug(f"Text contains newlines: {'\\n' in text}")
         
         # Wait before adding text
         time.sleep(5)
@@ -387,8 +408,8 @@ async def add_text_in_powerpoint(text: str) -> dict:
         
         # Split text into lines
         lines = text.split('\n')
-        print(f"[MCP Tool] Number of lines: {len(lines)}")
-        print(f"[MCP Tool] Lines to add: {lines}")
+        logger.debug(f"Number of lines: {len(lines)}")
+        logger.debug(f"Lines to add: {lines}")
         
         # Add each line as a separate paragraph
         for i, line in enumerate(lines):
@@ -417,7 +438,7 @@ async def add_text_in_powerpoint(text: str) -> dict:
         os.startfile('presentation.pptx')
         time.sleep(10)
         
-        print(f"[MCP Tool] Text added successfully: {text}")
+        logger.info(f"Text added successfully: {text}")
         return {
             "content": [
                 TextContent(
@@ -427,7 +448,8 @@ async def add_text_in_powerpoint(text: str) -> dict:
             ]
         }
     except Exception as e:
-        print(f"Error in add_text_in_powerpoint: {str(e)}")
+        logger.error(f"Error in add_text_in_powerpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         return {
             "content": [
                 TextContent(
@@ -443,19 +465,18 @@ async def add_text_in_powerpoint(text: str) -> dict:
 @mcp.resource("greeting://{name}")
 def get_greeting(name: str) -> str:
     """Get a personalized greeting"""
-    print("CALLED: get_greeting(name: str) -> str:")
+    logger.info(f"Calling get_greeting(name: {name}) -> str")
     return f"Hello, {name}!"
-
 
 # DEFINE AVAILABLE PROMPTS
 @mcp.prompt()
 def review_code(code: str) -> str:
+    logger.info(f"Calling review_code(code: {code[:50]}...) -> str")
     return f"Please review this code:\n\n{code}"
-    print("CALLED: review_code(code: str) -> str:")
-
 
 @mcp.prompt()
 def debug_error(error: str) -> list[base.Message]:
+    logger.info(f"Calling debug_error(error: {error[:50]}...) -> list[base.Message]")
     return [
         base.UserMessage("I'm seeing this error:"),
         base.UserMessage(error),
@@ -466,72 +487,86 @@ def debug_error(error: str) -> list[base.Message]:
 @mcp.tool()
 def t_number_list_to_sum(lst: list) -> int:
     """Sum numbers in a list (wrapper around tools.number_list_to_sum)"""
+    logger.info(f"Calling t_number_list_to_sum(lst: {lst}) -> int")
     return number_list_to_sum(lst)
 
 @mcp.tool()
 def t_calculate_difference(a: float, b: float) -> float:
     """Difference between two numbers (wrapper)"""
+    logger.info(f"Calling t_calculate_difference(a: {a}, b: {b}) -> float")
     return calculate_difference(a, b)
 
 @mcp.tool()
 def t_number_list_to_product(lst: list) -> int:
     """Product of numbers in a list (wrapper)"""
+    logger.info(f"Calling t_number_list_to_product(lst: {lst}) -> int")
     return number_list_to_product(lst)
 
 @mcp.tool()
 def t_calculate_division(a: float, b: float) -> float:
     """Division of two numbers (wrapper)"""
+    logger.info(f"Calling t_calculate_division(a: {a}, b: {b}) -> float")
     return calculate_division(a, b)
 
 @mcp.tool()
 def t_strings_to_chars_to_int(s: str) -> list[int]:
     """ASCII values of characters (wrapper)"""
+    logger.info(f"Calling t_strings_to_chars_to_int(s: {s}) -> list[int]")
     return local_strings_to_chars_to_int(s)
 
 @mcp.tool()
 def t_int_list_to_exponential_values(lst: list) -> list[float]:
     """Exponential of list elements (wrapper)"""
+    logger.info(f"Calling t_int_list_to_exponential_values(lst: {lst}) -> list[float]")
     return int_list_to_exponential_values(lst)
 
 @mcp.tool()
 def t_fibonacci_numbers(n: int) -> list[int]:
     """First n Fibonacci numbers (wrapper)"""
+    logger.info(f"Calling t_fibonacci_numbers(n: {n}) -> list[int]")
     return local_fibonacci_numbers(n)
 
 @mcp.tool()
 def t_calculate_factorial(n: int) -> list[int]:
     """List of factorials up to n-1 (wrapper)"""
+    logger.info(f"Calling t_calculate_factorial(n: {n}) -> list[int]")
     return calculate_factorial(n)
 
 @mcp.tool()
 def t_calculate_permutation(n: int, r: int) -> int:
     """Permutation nPr (wrapper)"""
+    logger.info(f"Calling t_calculate_permutation(n: {n}, r: {r}) -> int")
     return calculate_permutation(n, r)
 
 @mcp.tool()
 def t_calculate_combination(n: int, r: int) -> int:
     """Combination nCr (wrapper)"""
+    logger.info(f"Calling t_calculate_combination(n: {n}, r: {r}) -> int")
     return calculate_combination(n, r)
 
 @mcp.tool()
 def t_calculate_salary_for_id(emp_id: int) -> float | int | None:
     """Salary by employee id (wrapper)"""
+    logger.info(f"Calling t_calculate_salary_for_id(emp_id: {emp_id}) -> float | int | None")
     return calculate_salary_for_id(emp_id)
 
 @mcp.tool()
 def t_calculate_salary_for_name(emp_name: str) -> float | int | None:
     """Salary by employee name (wrapper)"""
+    logger.info(f"Calling t_calculate_salary_for_name(emp_name: {emp_name}) -> float | int | None")
     return calculate_salary_for_name(emp_name)
 
 @mcp.tool()
 def t_calculate_percentage(percent: float, number: float) -> float:
     """Calculate percentage of a number (wrapper)"""
+    logger.info(f"Calling t_calculate_percentage(percent: {percent}, number: {number}) -> float")
     return calculate_percentage(percent, number)
 
 if __name__ == "__main__":
-    # Check if running with mcp dev command
-    print("STARTING THE SERVER")
+    logger.info("Starting the MCP server")
     if len(sys.argv) > 1 and sys.argv[1] == "dev":
+        logger.info("Running MCP server in dev mode without transport")
         mcp.run()  # Run without transport for dev server
     else:
+        logger.info("Running MCP server with stdio transport")
         mcp.run(transport="stdio")  # Run with stdio for direct execution
