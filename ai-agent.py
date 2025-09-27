@@ -83,6 +83,44 @@ def reset_state():
     iteration = 0
     iteration_response = []
 
+async def create_tools_description(tools):
+    """Create a formatted description of available tools."""
+    print("Creating tools description...")
+    print(f"Number of tools: {len(tools)}")
+    
+    try:
+        tools_description = []
+        for i, tool in enumerate(tools):
+            try:
+                # Get tool properties
+                params = tool.inputSchema
+                desc = getattr(tool, 'description', 'No description available')
+                name = getattr(tool, 'name', f'tool_{i}')
+                
+                # Format the input schema in a more readable way
+                if 'properties' in params:
+                    param_details = []
+                    for param_name, param_info in params['properties'].items():
+                        param_type = param_info.get('type', 'unknown')
+                        param_details.append(f"{param_name}: {param_type}")
+                    params_str = ', '.join(param_details)
+                else:
+                    params_str = 'no parameters'
+
+                tool_desc = f"{i+1}. {name}({params_str}) - {desc}"
+                tools_description.append(tool_desc)
+                print(f"Added description for tool: {tool_desc}")
+            except Exception as e:
+                print(f"Error processing tool {i}: {e}")
+                tools_description.append(f"{i+1}. Error processing tool")
+        
+        tools_description = "\n".join(tools_description)
+        print("Successfully created tools description")
+        return tools_description
+    except Exception as e:
+        print(f"Error creating tools description: {e}")
+        return "Error loading tools"
+
 async def main():
     reset_state()  # Reset at the start of main
     print("Starting main execution...")
@@ -107,40 +145,7 @@ async def main():
                 print(f"Successfully retrieved {len(tools)} tools")
 
                 # Create tools description
-                print("Creating tools description...")
-                print(f"Number of tools: {len(tools)}")
-                
-                try:
-                    tools_description = []
-                    for i, tool in enumerate(tools):
-                        try:
-                            # Get tool properties
-                            params = tool.inputSchema
-                            desc = getattr(tool, 'description', 'No description available')
-                            name = getattr(tool, 'name', f'tool_{i}')
-                            
-                            # Format the input schema in a more readable way
-                            if 'properties' in params:
-                                param_details = []
-                                for param_name, param_info in params['properties'].items():
-                                    param_type = param_info.get('type', 'unknown')
-                                    param_details.append(f"{param_name}: {param_type}")
-                                params_str = ', '.join(param_details)
-                            else:
-                                params_str = 'no parameters'
-
-                            tool_desc = f"{i+1}. {name}({params_str}) - {desc}"
-                            tools_description.append(tool_desc)
-                            print(f"Added description for tool: {tool_desc}")
-                        except Exception as e:
-                            print(f"Error processing tool {i}: {e}")
-                            tools_description.append(f"{i+1}. Error processing tool")
-                    
-                    tools_description = "\n".join(tools_description)
-                    print("Successfully created tools description")
-                except Exception as e:
-                    print(f"Error creating tools description: {e}")
-                    tools_description = "Error loading tools"
+                tools_description = await create_tools_description(tools)
                 
                 # Format system prompt with tools description
                 system_prompt = SYSTEM_PROMPT_TEMPLATE.format(tools_description=tools_description)
