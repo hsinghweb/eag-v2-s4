@@ -16,6 +16,21 @@ from pptx.util import Inches
 import os
 from pptx.dml.color import RGBColor
 from pptx.util import Pt
+from tools import (
+    number_list_to_sum,
+    calculate_difference,
+    number_list_to_product,
+    calculate_division,
+    strings_to_chars_to_int as local_strings_to_chars_to_int,
+    int_list_to_exponential_values,
+    fibonacci_numbers as local_fibonacci_numbers,
+    calculate_factorial,
+    calculate_permutation,
+    calculate_combination,
+    calculate_salary_for_id,
+    calculate_salary_for_name,
+    calculate_percentage,
+)
 
 # instantiate an MCP server client
 mcp = FastMCP("Calculator")
@@ -446,6 +461,72 @@ def debug_error(error: str) -> list[base.Message]:
         base.UserMessage(error),
         base.AssistantMessage("I'll help debug that. What have you tried so far?"),
     ]
+
+# TOOLS WRAPPING FUNCTIONS FROM tools.py
+@mcp.tool()
+def t_number_list_to_sum(lst: list) -> int:
+    """Sum numbers in a list (wrapper around tools.number_list_to_sum)"""
+    return number_list_to_sum(lst)
+
+@mcp.tool()
+def t_calculate_difference(a: float, b: float) -> float:
+    """Difference between two numbers (wrapper)"""
+    return calculate_difference(a, b)
+
+@mcp.tool()
+def t_number_list_to_product(lst: list) -> int:
+    """Product of numbers in a list (wrapper)"""
+    return number_list_to_product(lst)
+
+@mcp.tool()
+def t_calculate_division(a: float, b: float) -> float:
+    """Division of two numbers (wrapper)"""
+    return calculate_division(a, b)
+
+@mcp.tool()
+def t_strings_to_chars_to_int(s: str) -> list[int]:
+    """ASCII values of characters (wrapper)"""
+    return local_strings_to_chars_to_int(s)
+
+@mcp.tool()
+def t_int_list_to_exponential_values(lst: list) -> list[float]:
+    """Exponential of list elements (wrapper)"""
+    return int_list_to_exponential_values(lst)
+
+@mcp.tool()
+def t_fibonacci_numbers(n: int) -> list[int]:
+    """First n Fibonacci numbers (wrapper)"""
+    return local_fibonacci_numbers(n)
+
+@mcp.tool()
+def t_calculate_factorial(n: int) -> list[int]:
+    """List of factorials up to n-1 (wrapper)"""
+    return calculate_factorial(n)
+
+@mcp.tool()
+def t_calculate_permutation(n: int, r: int) -> int:
+    """Permutation nPr (wrapper)"""
+    return calculate_permutation(n, r)
+
+@mcp.tool()
+def t_calculate_combination(n: int, r: int) -> int:
+    """Combination nCr (wrapper)"""
+    return calculate_combination(n, r)
+
+@mcp.tool()
+def t_calculate_salary_for_id(emp_id: int) -> float | int | None:
+    """Salary by employee id (wrapper)"""
+    return calculate_salary_for_id(emp_id)
+
+@mcp.tool()
+def t_calculate_salary_for_name(emp_name: str) -> float | int | None:
+    """Salary by employee name (wrapper)"""
+    return calculate_salary_for_name(emp_name)
+
+@mcp.tool()
+def t_calculate_percentage(percent: float, number: float) -> float:
+    """Calculate percentage of a number (wrapper)"""
+    return calculate_percentage(percent, number)
 
 if __name__ == "__main__":
     # Check if running with mcp dev command
