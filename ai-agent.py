@@ -38,7 +38,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # Initialize the model
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Constants
 MAX_ITERATIONS = 5
