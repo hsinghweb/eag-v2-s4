@@ -141,9 +141,9 @@ async def create_tools_description(tools):
         logger.error(f"Error creating tools description: {e}")
         return "Error loading tools"
 
-async def main():
+async def main(query: str):
     reset_state()  # Reset at the start of main
-    logger.info("Starting main execution...")
+    logger.info(f"Starting main execution with query: {query}")
     try:
         # Create a single MCP server connection
         logger.info("Establishing connection to MCP server...")
@@ -171,7 +171,6 @@ async def main():
                 system_prompt = SYSTEM_PROMPT_TEMPLATE.format(tools_description=tools_description)
                 logger.info("Created system prompt...")
                 
-                query = """Find the ASCII values of characters in HIMANSHU and then return sum of exponentials of those values."""
                 logger.info("Starting iteration loop...")
                 
                 # Use global iteration variables
@@ -182,8 +181,7 @@ async def main():
                     if last_response is None:
                         current_query = query
                     else:
-                        current_query = current_query + "\n\n" + " ".join(iteration_response)
-                        current_query = current_query + "  What should I do next?"
+                        current_query = query + "\n\n" + " ".join(iteration_response) + " What should I do next?"
 
                     # Get model's response with timeout
                     logger.info("Preparing to generate LLM response...")
@@ -337,4 +335,10 @@ async def main():
         reset_state()  # Reset at the end of main
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    query = input("Enter your math query: ").strip()
+    if not query:
+        logger.error("No query provided by user")
+        print("Error: Please provide a valid math query")
+    else:
+        logger.info(f"User provided query: {query}")
+        asyncio.run(main(query))
