@@ -167,45 +167,9 @@ async def main():
                     print("Created system prompt...")
                     
                     system_prompt = f"""You are a math agent solving problems in iterations. You have access to various mathematical tools and PowerPoint functions.
-
-Available tools:
-{tools_description}
-
-You must follow this sequence for each problem:
-1. First, perform all necessary mathematical calculations using FUNCTION_CALL
-2. Then, use PowerPoint to visualize the results in this order:
-   - Open PowerPoint once at the start
-   - Draw a rectangle to highlight the results (use coordinates x1=2, y1=2, x2=7, y2=5 for center positioning)
-   - Add the Final Result inside the rectangle with this exact format:
-     "Final Result:\\n<calculated_value>"
-   - Close PowerPoint at the end
-
-For array parameters, you can pass them in two formats:
-1. As a comma-separated list: param1,param2,param3
-2. As a bracketed list: [param1,param2,param3]
-
-Example text format for PowerPoint:
-POWERPOINT: add_text_in_powerpoint|Final Result:\\n7.59982224609308e+33
-
-You must respond with EXACTLY ONE line in one of these formats (no additional text):
-1. For function calls:
-   FUNCTION_CALL: function_name|param1|param2|...
-   
-2. For final answers:
-   FINAL_ANSWER: [7.59982224609308e+33]
-
-3. For PowerPoint operations:
-   POWERPOINT: operation|param1|param2|...
-
-Examples:
-- FUNCTION_CALL: add|5|3
-- POWERPOINT: open_powerpoint
-- POWERPOINT: add_text_in_powerpoint|Final Result:\\n7.59982224609308e+33
-- FINAL_ANSWER: [7.59982224609308e+33]
-
-DO NOT include any explanations or additional text.
-Your entire response should be a single line starting with either FUNCTION_CALL:, POWERPOINT:, or FINAL_ANSWER:"""
-
+                                    Available tools:
+                                    {tools_description}
+                                    DO NOT include multiple responses. Give ONE response at a time."""
                     query = """Find the ASCII values of characters in HIMANSHU and then return sum of exponentials of those values. 
                     Also, create a PowerPoint presentation showing the Final Answer inside a rectangle box."""
                     print("Starting iteration loop...")
@@ -364,8 +328,11 @@ Your entire response should be a single line starting with either FUNCTION_CALL:
                                     if not powerpoint_opened:
                                         result = await session.call_tool("open_powerpoint")
                                         powerpoint_opened = True
+                                        iteration_response.append("Opened PowerPoint presentation.")
+                                        last_response = "Opened PowerPoint presentation."
                                     else:
                                         iteration_response.append("PowerPoint is already open")
+                                        iteration += 1
                                         continue
                                 elif operation == "draw_rectangle":
                                     if powerpoint_opened:
@@ -428,6 +395,7 @@ Your entire response should be a single line starting with either FUNCTION_CALL:
                                         break
                                     else:
                                         iteration_response.append("PowerPoint is already closed")
+                                        iteration += 1
                                         continue
                                 else:
                                     raise ValueError(f"Unknown PowerPoint operation: {operation}")
