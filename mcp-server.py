@@ -33,6 +33,12 @@ from tools import (
 import logging
 from datetime import datetime
 import traceback
+import smtplib
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 log_dir = "logs"
@@ -115,48 +121,6 @@ def factorial(a: int) -> int:
     """Factorial of a number"""
     logger.info(f"Calling factorial(a: {a}) -> int")
     return int(math.factorial(a))
-
-# Log tool
-@mcp.tool()
-def log(a: int) -> float:
-    """Log of a number"""
-    logger.info(f"Calling log(a: {a}) -> float")
-    return float(math.log(a))
-
-# Remainder tool
-@mcp.tool()
-def remainder(a: int, b: int) -> int:
-    """Remainder of two numbers division"""
-    logger.info(f"Calling remainder(a: {a}, b: {b}) -> int")
-    return int(a % b)
-
-# Sin tool
-@mcp.tool()
-def sin(a: int) -> float:
-    """Sin of a number"""
-    logger.info(f"Calling sin(a: {a}) -> float")
-    return float(math.sin(a))
-
-# Cos tool
-@mcp.tool()
-def cos(a: int) -> float:
-    """Cos of a number"""
-    logger.info(f"Calling cos(a: {a}) -> float")
-    return float(math.cos(a))
-
-# Tan tool
-@mcp.tool()
-def tan(a: int) -> float:
-    """Tan of a number"""
-    logger.info(f"Calling tan(a: {a}) -> float")
-    return float(math.tan(a))
-
-# Mine tool
-@mcp.tool()
-def mine(a: int, b: int) -> int:
-    """Special mining tool"""
-    logger.info(f"Calling mine(a: {a}, b: {b}) -> int")
-    return int(a - b - b)
 
 @mcp.tool()
 def create_thumbnail(image_path: str) -> Image:
@@ -455,6 +419,100 @@ async def add_text_in_powerpoint(text: str) -> dict:
                 TextContent(
                     type="text",
                     text=f"Error adding text: {str(e)}"
+                )
+            ]
+        }
+
+@mcp.tool()
+async def send_gmail(content: str) -> dict:
+    """Send an email with the specified content via Gmail"""
+    try:
+        logger.info(f"Calling send_gmail(content: {content[:50]}...)")
+        
+        # Retrieve Gmail credentials and recipient from .env
+        gmail_address = os.getenv("GMAIL_ADDRESS")
+        gmail_app_password = os.getenv("GMAIL_APP_PASSWORD")
+        recipient_email = os.getenv("RECIPIENT_EMAIL")
+        
+        if not all([gmail_address, gmail_app_password, recipient_email]):
+            error_msg = "Missing GMAIL_ADDRESS, GMAIL_APP_PASSWORD, or RECIPIENT_EMAIL in .env file"
+            logger.error(error_msg)
+            return {
+                "content": [
+                    TextContent(
+                        type="text",
+                        text=error_msg
+                    )
+                ]
+            }
+        
+        # Validate Gmail address and recipient email format
+        if not (gmail_address.endswith('@gmail.com') and '@' in recipient_email):
+            error_msg = f"Invalid email format: GMAIL_ADDRESS={gmail_address}, RECIPIENT_EMAIL={recipient_email}"
+            logger.error(error_msg)
+            return {
+                "content": [
+                    TextContent(
+                        type="text",
+                        text=error_msg
+                    )
+                ]
+            }
+        
+        # Create the email message
+        msg = MIMEText(content)
+        msg['Subject'] = 'Math Agent Result'
+        msg['From'] = gmail_address
+        msg['To'] = recipient_email
+        
+        # Connect to Gmail's SMTP server
+        try:
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                logger.debug(f"Connecting to Gmail SMTP server (smtp.gmail.com:465)")
+                server.login(gmail_address, gmail_app_password)
+                logger.debug(f"Logged in as {gmail_address}")
+                server.sendmail(gmail_address, recipient_email, msg.as_string())
+                logger.info(f"Email sent successfully to {recipient_email}")
+        except smtplib.SMTPAuthenticationError as e:
+            error_msg = f"SMTP Authentication failed: {str(e)}. Ensure GMAIL_APP_PASSWORD is correct and 2-Step Verification is enabled."
+            logger.error(error_msg)
+            return {
+                "content": [
+                    TextContent(
+                        type="text",
+                        text=error_msg
+                    )
+                ]
+            }
+        except Exception as e:
+            error_msg = f"Failed to send email: {str(e)}"
+            logger.error(error_msg)
+            return {
+                "content": [
+                    TextContent(
+                        type="text",
+                        text=error_msg
+                    )
+                ]
+            }
+        
+        return {
+            "content": [
+                TextContent(
+                    type="text",
+                    text=f"Email sent successfully to {recipient_email}"
+                )
+            ]
+        }
+    except Exception as e:
+        error_msg = f"Error in send_gmail: {str(e)}"
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
+        return {
+            "content": [
+                TextContent(
+                    type="text",
+                    text=error_msg
                 )
             ]
         }

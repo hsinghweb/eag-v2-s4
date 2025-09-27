@@ -320,6 +320,16 @@ async def main(query: str):
                         )
                         logger.info(result.content[0].text)
                         
+                        # Send the final result via Gmail
+                        email_content = f"Query: {query}\n\nFinal Result: {response_text}"
+                        result = await session.call_tool(
+                            "send_gmail",
+                            arguments={
+                                "content": email_content
+                            }
+                        )
+                        logger.info(result.content[0].text)
+                        
                         # Close PowerPoint
                         result = await session.call_tool("close_powerpoint")
                         logger.info(result.content[0].text)
