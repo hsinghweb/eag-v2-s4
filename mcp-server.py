@@ -230,8 +230,15 @@ async def open_powerpoint() -> dict:
         }
 
 @mcp.tool()
-async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
-    """Draw a rectangle in the first slide of PowerPoint"""
+async def draw_rectangle(x1: int = 1, y1: int = 1, x2: int = 8, y2: int = 6) -> dict:
+    """Draw a rectangle in the first slide of PowerPoint
+    
+    Args:
+        x1: X-coordinate of top-left corner (1-8, default: 1)
+        y1: Y-coordinate of top-left corner (1-8, default: 1)
+        x2: X-coordinate of bottom-right corner (1-8, default: 8)
+        y2: Y-coordinate of bottom-right corner (1-8, default: 6)
+    """
     try:
         logger.info(f"Drawing rectangle with parameters: x1={x1} ({type(x1)}), y1={y1} ({type(y1)}), x2={x2} ({type(x2)}), y2={y2} ({type(y2)})")
         

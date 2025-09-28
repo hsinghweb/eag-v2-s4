@@ -37,14 +37,18 @@ if not api_key:
 # Configure the Gemini API
 genai.configure(api_key=api_key)
 
-# Initialize the model
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Constants
 MAX_ITERATIONS = 5
 
+# Global variables
+last_response = None
+iteration = 0
+iteration_response = []
+
 # System prompt template (to be formatted with tools_description)
-SYSTEM_PROMPT_TEMPLATE = """You are a math agent solving problems in iterations. You have access to various mathematical tools.
+SYSTEM_PROMPT_TEMPLATE = """You are a helpful assistant that can perform various tasks including math calculations, PowerPoint operations, and sending emails.
 
 Available tools:
 {tools_description}
@@ -54,24 +58,31 @@ You must respond with EXACTLY ONE line in one of these formats (no additional te
    FUNCTION_CALL: function_name|param1|param2|...
    
 2. For final answers:
-   FINAL_ANSWER: [number]
+   FINAL_ANSWER: [your final answer here]
+
+PowerPoint Operations:
+- Use 'open_powerpoint' to open PowerPoint with a blank presentation
+- Use 'draw_rectangle' to draw a rectangle on the slide (default coordinates: x1=1, y1=1, x2=8, y2=6)
+- Use 'add_text_in_powerpoint' to add text to the slide
+- Use 'close_powerpoint' when done with PowerPoint operations
+
+Email Operations:
+- Use 'send_gmail' to send an email with the results
 
 Important:
 - When a function returns multiple values, you need to process all of them
-- Only give FINAL_ANSWER when you have completed all necessary calculations
+- Only give FINAL_ANSWER when you have completed all necessary operations
 - Do not repeat function calls with the same parameters
+- For PowerPoint operations, follow this sequence: open_powerpoint -> draw_rectangle -> add_text_in_powerpoint -> close_powerpoint
+- For email operations, use send_gmail with the content parameter
 
 Examples:
 - FUNCTION_CALL: add|5|3
-- FUNCTION_CALL: strings_to_chars_to_int|INDIA
-- FINAL_ANSWER: [42]
-
-DO NOT include any explanations or additional text.
-Your entire response should be a single line starting with either FUNCTION_CALL: or FINAL_ANSWER:"""
-
-last_response = None
-iteration = 0
-iteration_response = []
+- FUNCTION_CALL: draw_rectangle|1|1|8|6
+- FUNCTION_CALL: add_text_in_powerpoint|Hello World|2|2|24|True
+- FUNCTION_CALL: close_powerpoint|
+- FUNCTION_CALL: send_gmail|Here is the result of your query: 42
+- FINAL_ANSWER: [42]"""
 
 async def generate_with_timeout(model, prompt, timeout=10):
     """Generate content with a timeout"""
@@ -297,145 +308,15 @@ async def main(query: str):
                         final_answer = response_text.split(":", 1)[1].strip()
                         logger.info(f"Final answer: {final_answer}")
                         
-                        # Analyze the query to determine required operations
-                        query_lower = query.lower()
-                        use_powerpoint = 'powerpoint' in query_lower or 'ppt' in query_lower or 'presentation' in query_lower
-                        use_email = 'email' in query_lower or 'mail' in query_lower or 'send' in query_lower
-                        
-                        # Create a status dictionary to track all operations
-                        status = {
-                            'final_answer': final_answer,
-                            'powerpoint_status': 'Not requested',
-                            'email_status': 'Not requested',
-                            'success': True,
-                            'error': None
-                        }
-                        
-                        # If no specific request, check if it's a simple math query
-                        if not use_powerpoint and not use_email:
-                            # Check if it's just a math expression (numbers and basic operators)
-                            import re
-                            math_pattern = r'^[\d\s+\-*/^(). ]+$'
-                            is_simple_math = bool(re.match(math_pattern, query))
-                            
-                            if is_simple_math:
-                                logger.info("Simple math query detected, skipping PPT and email operations")
-                                status['powerpoint_status'] = 'Not needed (simple math)'
-                                status['email_status'] = 'Not needed (simple math)'
-                                
-                                # Format the response
-                                response_data = {
-                                    'result': final_answer.strip('[]'),
-                                    'powerpoint': status['powerpoint_status'],
-                                    'email': status['email_status'],
-                                    'success': status['success']
-                                }
-                                
-                                if status['error']:
-                                    response_data['error'] = status['error']
-                                
-                                import json
-                                return json.dumps(response_data, indent=2)
-                        
-                        # Skip additional LLM iterations since we'll handle the operations directly
-                        iteration = MAX_ITERATIONS
-                        
-                        try:
-                            # Handle PowerPoint operations if requested
-                            if use_powerpoint:
-                                logger.info("Starting PowerPoint operations...")
-                                status['powerpoint_status'] = 'PowerPoint operation started'
-                                
-                                logger.info("Opening PowerPoint...")
-                                result = await session.call_tool("open_powerpoint")
-                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                                status['powerpoint_status'] = 'PowerPoint opened'
-                                
-                                # Wait for PowerPoint to open
-                                await asyncio.sleep(2)
-                                
-                                # 1. Draw the rectangle
-                                logger.info("Drawing rectangle in PowerPoint...")
-                                result = await session.call_tool(
-                                    "draw_rectangle",
-                                    arguments={
-                                        "x1": 1,          # Start at left edge with padding
-                                        "y1": 1,          # Start at top edge with padding
-                                        "x2": 8,          # Extend to right edge
-                                        "y2": 6,          # Extend down
-                                        "fill_color": "#FFFFFF",  # White fill
-                                        "line_color": "#000000",  # Black border
-                                        "line_weight": 2.25,      # Thicker border
-                                        "fill_transparency": 0    # Solid fill
-                                    }
-                                )
-                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                                
-                                # 2. Add the text inside the rectangle
-                                text_content = f"Query: {query}\nResult: {final_answer}"
-                                logger.info("Adding text to PowerPoint...")
-                                result = await session.call_tool(
-                                    "add_text_in_powerpoint",
-                                    arguments={
-                                        "text": text_content,
-                                        "x": 2,           # Start x position
-                                        "y": 2,           # Start y position
-                                        "font_size": 24,
-                                        "bold": True
-                                    }
-                                )
-                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                                status['powerpoint_status'] = 'PowerPoint updated with results'
-                                
-                                # Close PowerPoint after operations
-                                logger.info("Closing PowerPoint...")
-                                result = await session.call_tool("close_powerpoint")
-                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            
-                            # Handle email operations if requested
-                            if use_email:
-                                logger.info("Sending email...")
-                                email_content = f"Query: {query}\n\nFinal Result: {final_answer}"
-                                result = await session.call_tool(
-                                    "send_gmail",
-                                    arguments={
-                                        "content": email_content
-                                    }
-                                )
-                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                                status['email_status'] = 'Email sent successfully'
-                            
-                            logger.info("Requested operations completed successfully")
-                            
-                        except Exception as e:
-                            error_msg = f"Error in operations: {str(e)}"
-                            logger.error(error_msg)
-                            logger.error(traceback.format_exc())
-                            status['success'] = False
-                            status['error'] = error_msg
-                            
-                            # Try to close PowerPoint if it's open
-                            try:
-                                await session.call_tool("close_powerpoint")
-                            except:
-                                pass
-                        
-                        # Format the final response as a clean dictionary
+                        # Simple response for the final answer
                         response_data = {
-                            'result': status['final_answer'].strip('[]'),  # Remove brackets from the result
-                            'powerpoint': status['powerpoint_status'],
-                            'email': status['email_status'],
-                            'success': status['success']
+                            'result': final_answer.strip('[]'),
+                            'success': True
                         }
-                        
-                        if status['error']:
-                            response_data['error'] = status['error']
                         
                         # Convert to JSON string for the response
                         import json
                         return json.dumps(response_data, indent=2)
-
-                        break
 
                     iteration += 1
 
