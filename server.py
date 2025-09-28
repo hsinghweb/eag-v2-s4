@@ -20,25 +20,36 @@ async def handle_query():
         
         if not query:
             return jsonify({'error': 'No query provided'}), 400
-            
         logger.info(f"Received query: {query}")
         
         # Run the AI agent with the query
         result = await ai_main(query)
         
-        # Extract FINAL_ANSWER if present
-        final_answer = None
-        if isinstance(result, str):
+        # Parse the JSON response from the AI agent
+        try:
+            if isinstance(result, str):
+                import json
+                result_data = json.loads(result)
+                if 'result' in result_data:
+                    return jsonify({
+                        'status': 'success',
+                        'result': result_data['result']
+                    })
+        except json.JSONDecodeError:
+            logger.warning("Failed to parse AI agent response as JSON, falling back to string extraction")
+            # Fallback to string extraction if JSON parsing fails
             if 'FINAL_ANSWER:' in result:
                 final_answer = result.split('FINAL_ANSWER:')[-1].strip()
-                # Clean up the answer by removing any remaining brackets or quotes
-                final_answer = final_answer.strip('[]"\'')
-            else:
-                final_answer = result.strip('"\'')
+                final_answer = final_answer.strip('[]\'"')
+                return jsonify({
+                    'status': 'success',
+                    'result': final_answer
+                })
         
+        # If we get here, we couldn't extract a proper result
         return jsonify({
             'status': 'success',
-            'result': final_answer if final_answer is not None else 'No answer found'
+            'result': result if isinstance(result, str) else str(result)
         })
         
     except Exception as e:

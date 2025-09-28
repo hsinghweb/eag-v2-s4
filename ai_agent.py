@@ -60,29 +60,43 @@ You must respond with EXACTLY ONE line in one of these formats (no additional te
 2. For final answers:
    FINAL_ANSWER: [your final answer here]
 
-PowerPoint Operations:
+Important Rules:
+1. ONLY perform the exact operations requested by the user.
+2. DO NOT perform any PowerPoint operations unless explicitly asked (e.g., 'create a PowerPoint', 'make a presentation', 'show in PPT').
+3. For email operations, ONLY use 'send_gmail' when explicitly asked (e.g., 'send email', 'email me', 'mail the result').
+4. For math operations, just return the FINAL_ANSWER unless additional operations are explicitly requested.
+5. When a function returns multiple values, you need to process all of them.
+6. Only give FINAL_ANSWER when you have completed all necessary operations.
+7. Do not repeat function calls with the same parameters.
+
+PowerPoint Operations (ONLY use when explicitly requested):
 - Use 'open_powerpoint' to open PowerPoint with a blank presentation
 - Use 'draw_rectangle' to draw a rectangle on the slide (default coordinates: x1=1, y1=1, x2=8, y2=6)
 - Use 'add_text_in_powerpoint' to add text to the slide
 - Use 'close_powerpoint' when done with PowerPoint operations
+- Follow this sequence: open_powerpoint -> draw_rectangle -> add_text_in_powerpoint -> close_powerpoint
 
-Email Operations:
+Email Operations (ONLY use when explicitly requested):
 - Use 'send_gmail' to send an email with the results
-
-Important:
-- When a function returns multiple values, you need to process all of them
-- Only give FINAL_ANSWER when you have completed all necessary operations
-- Do not repeat function calls with the same parameters
-- For PowerPoint operations, follow this sequence: open_powerpoint -> draw_rectangle -> add_text_in_powerpoint -> close_powerpoint
-- For email operations, use send_gmail with the content parameter
+- Format: send_gmail|Your message here
 
 Examples:
-- FUNCTION_CALL: add|5|3
-- FUNCTION_CALL: draw_rectangle|1|1|8|6
-- FUNCTION_CALL: add_text_in_powerpoint|Hello World|2|2|24|True
-- FUNCTION_CALL: close_powerpoint|
-- FUNCTION_CALL: send_gmail|Here is the result of your query: 42
-- FINAL_ANSWER: [42]"""
+User: What is 2 + 3?
+FINAL_ANSWER: [Query: What is 2 + 3? Result: 5]
+
+User: Add 2 and 3 and show in PowerPoint
+FUNCTION_CALL: open_powerpoint|
+FUNCTION_CALL: draw_rectangle|1|1|8|6
+FUNCTION_CALL: add_text_in_powerpoint|Query: Add 2 and 3 and show in PowerPoint\nResult: 2 + 3 = 5|2|2|24|True
+FUNCTION_CALL: close_powerpoint|
+FINAL_ANSWER: [Query: Add 2 and 3 and show in PowerPoint. Result: 5. The result has been added to PowerPoint.]
+
+User: Add 2 and 3 and email me the result
+FUNCTION_CALL: send_gmail|Query: Add 2 and 3 and email me the result\n\nResult: 2 + 3 = 5
+FINAL_ANSWER: [Query: Add 2 and 3 and email me the result. Result: 5. The result has been sent via email.]
+
+User: Add 2 and 3
+FINAL_ANSWER: [Query: Add 2 and 3. Result: 5]"""
 
 async def generate_with_timeout(model, prompt, timeout=10):
     """Generate content with a timeout"""
@@ -308,10 +322,15 @@ async def main(query: str):
                         final_answer = response_text.split(":", 1)[1].strip()
                         logger.info(f"Final answer: {final_answer}")
                         
+                        # Format the response to include the original query and result
+                        formatted_response = f"Query: {query}\nResult: {final_answer}"
+                        
                         # Simple response for the final answer
                         response_data = {
-                            'result': final_answer.strip('[]'),
-                            'success': True
+                            'result': formatted_response.strip('[]'),
+                            'success': True,
+                            'query': query,
+                            'answer': final_answer.strip('[]')
                         }
                         
                         # Convert to JSON string for the response
