@@ -297,66 +297,115 @@ async def main(query: str):
                         final_answer = response_text.split(":", 1)[1].strip()
                         logger.info(f"Final answer: {final_answer}")
                         
+                        # Analyze the query to determine required operations
+                        query_lower = query.lower()
+                        use_powerpoint = 'powerpoint' in query_lower or 'ppt' in query_lower or 'presentation' in query_lower
+                        use_email = 'email' in query_lower or 'mail' in query_lower or 'send' in query_lower
+                        
                         # Create a status dictionary to track all operations
                         status = {
                             'final_answer': final_answer,
-                            'powerpoint_status': 'Not started',
-                            'email_status': 'Not started',
+                            'powerpoint_status': 'Not requested',
+                            'email_status': 'Not requested',
                             'success': True,
                             'error': None
                         }
                         
-                        logger.info("Starting PowerPoint and email operations...")
+                        # If no specific request, check if it's a simple math query
+                        if not use_powerpoint and not use_email:
+                            # Check if it's just a math expression (numbers and basic operators)
+                            import re
+                            math_pattern = r'^[\d\s+\-*/^(). ]+$'
+                            is_simple_math = bool(re.match(math_pattern, query))
+                            
+                            if is_simple_math:
+                                logger.info("Simple math query detected, skipping PPT and email operations")
+                                status['powerpoint_status'] = 'Not needed (simple math)'
+                                status['email_status'] = 'Not needed (simple math)'
+                                
+                                # Format the response
+                                response_data = {
+                                    'result': final_answer.strip('[]'),
+                                    'powerpoint': status['powerpoint_status'],
+                                    'email': status['email_status'],
+                                    'success': status['success']
+                                }
+                                
+                                if status['error']:
+                                    response_data['error'] = status['error']
+                                
+                                import json
+                                return json.dumps(response_data, indent=2)
+                        
+                        # Skip additional LLM iterations since we'll handle the operations directly
+                        iteration = MAX_ITERATIONS
                         
                         try:
-                            # PowerPoint Operations
-                            logger.info("Opening PowerPoint...")
-                            result = await session.call_tool("open_powerpoint")
-                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            status['powerpoint_status'] = 'PowerPoint opened'
+                            # Handle PowerPoint operations if requested
+                            if use_powerpoint:
+                                logger.info("Starting PowerPoint operations...")
+                                status['powerpoint_status'] = 'PowerPoint operation started'
+                                
+                                logger.info("Opening PowerPoint...")
+                                result = await session.call_tool("open_powerpoint")
+                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                                status['powerpoint_status'] = 'PowerPoint opened'
+                                
+                                # Wait for PowerPoint to open
+                                await asyncio.sleep(2)
+                                
+                                # 1. Draw the rectangle
+                                logger.info("Drawing rectangle in PowerPoint...")
+                                result = await session.call_tool(
+                                    "draw_rectangle",
+                                    arguments={
+                                        "x1": 1,          # Start at left edge with padding
+                                        "y1": 1,          # Start at top edge with padding
+                                        "x2": 8,          # Extend to right edge
+                                        "y2": 6,          # Extend down
+                                        "fill_color": "#FFFFFF",  # White fill
+                                        "line_color": "#000000",  # Black border
+                                        "line_weight": 2.25,      # Thicker border
+                                        "fill_transparency": 0    # Solid fill
+                                    }
+                                )
+                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                                
+                                # 2. Add the text inside the rectangle
+                                text_content = f"Query: {query}\nResult: {final_answer}"
+                                logger.info("Adding text to PowerPoint...")
+                                result = await session.call_tool(
+                                    "add_text_in_powerpoint",
+                                    arguments={
+                                        "text": text_content,
+                                        "x": 2,           # Start x position
+                                        "y": 2,           # Start y position
+                                        "font_size": 24,
+                                        "bold": True
+                                    }
+                                )
+                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                                status['powerpoint_status'] = 'PowerPoint updated with results'
+                                
+                                # Close PowerPoint after operations
+                                logger.info("Closing PowerPoint...")
+                                result = await session.call_tool("close_powerpoint")
+                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
                             
-                            # Wait for PowerPoint to open
-                            await asyncio.sleep(2)
+                            # Handle email operations if requested
+                            if use_email:
+                                logger.info("Sending email...")
+                                email_content = f"Query: {query}\n\nFinal Result: {final_answer}"
+                                result = await session.call_tool(
+                                    "send_gmail",
+                                    arguments={
+                                        "content": email_content
+                                    }
+                                )
+                                logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                                status['email_status'] = 'Email sent successfully'
                             
-                            logger.info("Drawing rectangle in PowerPoint...")
-                            result = await session.call_tool(
-                                "draw_rectangle",
-                                arguments={
-                                    "x1": 1,          # Start at left edge (min: 1)
-                                    "y1": 1,          # Start at top edge (min: 1)
-                                    "x2": 8,          # Extend to right edge (max: 8)
-                                    "y2": 6           # Extend down (leaving some space at bottom)
-                                }
-                            )
-                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            
-                            logger.info("Adding text to PowerPoint...")
-                            result = await session.call_tool(
-                                "add_text_in_powerpoint",
-                                arguments={
-                                    "text": f"Query: {query}\nResult: {final_answer}"
-                                }
-                            )
-                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            status['powerpoint_status'] = 'PowerPoint updated with results'
-                            
-                            # Email Operations
-                            logger.info("Sending email...")
-                            email_content = f"Query: {query}\n\nFinal Result: {final_answer}"
-                            result = await session.call_tool(
-                                "send_gmail",
-                                arguments={
-                                    "content": email_content
-                                }
-                            )
-                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            status['email_status'] = 'Email sent successfully'
-                            
-                            logger.info("Closing PowerPoint...")
-                            result = await session.call_tool("close_powerpoint")
-                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
-                            
-                            logger.info("All operations completed successfully")
+                            logger.info("Requested operations completed successfully")
                             
                         except Exception as e:
                             error_msg = f"Error in operations: {str(e)}"
