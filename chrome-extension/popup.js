@@ -4,6 +4,63 @@ document.addEventListener('DOMContentLoaded', function() {
   const resultDiv = document.getElementById('result');
   const loader = document.getElementById('loader');
 
+  // Add some basic styles
+  const style = document.createElement('style');
+  style.textContent = `
+    .result-container {
+      margin-top: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .query-display {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .result-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+    .result-item.error {
+      background: #ffebee;
+      border-left: 3px solid #f44336;
+    }
+    .result-label {
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 3px;
+    }
+    .result-value {
+      color: #333;
+    }
+    #loader {
+      display: none;
+      margin: 10px 0;
+      color: #666;
+    }
+    #query-input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    #submit-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #submit-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  `;
+  document.head.appendChild(style);
+
   // Handle Enter key in the input field
   queryInput.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
@@ -36,41 +93,55 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ query })
       });
 
-      const data = await response.json();
+      const resultData = await response.json();
       
-      if (data.status === 'success') {
-        // Display the result
-        if (data.result) {
-          let displayText = data.result;
-          
-          // Clean up the display text
-          if (typeof displayText === 'string') {
-            // Remove any remaining FINAL_ANSWER: prefix and trim
-            displayText = displayText.replace(/^FINAL_ANSWER:/i, '').trim();
-            // Remove any remaining quotes or brackets
-            displayText = displayText.replace(/^["\[\]']+|["\[\]']+$/g, '');
-          }
-          
-          // Set the result with improved formatting
-          resultDiv.innerHTML = `
-            <div style="margin-bottom: 10px; font-weight: bold;">
-              ${queryInput.value}
-            </div>
-            <div style="background: #f0f0f0; padding: 10px; border-radius: 4px;">
-              ${displayText}
-            </div>
-          `;
-        } else {
-          resultDiv.textContent = 'No result returned';
-        }
-      } else {
-        resultDiv.textContent = `Error: ${data.message || 'Unknown error occurred'}`;
+      // Create the result container
+      const resultContainer = document.createElement('div');
+      resultContainer.className = 'result-container';
+      
+      // Add the query display
+      const queryDisplay = document.createElement('div');
+      queryDisplay.className = 'query-display';
+      queryDisplay.textContent = `Query: ${query}`;
+      resultContainer.appendChild(queryDisplay);
+      
+      // Add the result items
+      const resultItem = document.createElement('div');
+      resultItem.className = 'result-item';
+      
+      let resultHTML = `
+        <div class="result-item">
+          <div class="result-label">Result</div>
+          <div class="result-value">${resultData.result || 'No result'}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">PowerPoint Status</div>
+          <div class="result-value">${resultData.powerpoint || 'N/A'}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Email Status</div>
+          <div class="result-value">${resultData.email || 'N/A'}</div>
+        </div>
+      `;
+      
+      if (resultData.error) {
+        resultHTML += `
+          <div class="result-item error">
+            <div class="result-label">Error</div>
+            <div class="result-value">${resultData.error}</div>
+          </div>
+        `;
       }
+      
+      resultItem.innerHTML = resultHTML;
+      resultContainer.appendChild(resultItem);
+      resultDiv.appendChild(resultContainer);
+      
     } catch (error) {
       console.error('Error:', error);
-      resultDiv.textContent = `Failed to connect to the Math Agent server. Make sure the server is running.`;
+      resultDiv.textContent = 'Failed to connect to the Math Agent server. Make sure the server is running.';
     } finally {
-      // Hide loading state
+      // Hide loading state and re-enable button
       loader.style.display = 'none';
       submitBtn.disabled = false;
     }

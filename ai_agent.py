@@ -371,17 +371,20 @@ async def main(query: str):
                             except:
                                 pass
                         
-                        # Format the final response
-                        response_parts = [
-                            f"FINAL_RESULT: {status['final_answer']}",
-                            f"POWERPOINT: {status['powerpoint_status']}",
-                            f"EMAIL: {status['email_status']}"
-                        ]
+                        # Format the final response as a clean dictionary
+                        response_data = {
+                            'result': status['final_answer'].strip('[]'),  # Remove brackets from the result
+                            'powerpoint': status['powerpoint_status'],
+                            'email': status['email_status'],
+                            'success': status['success']
+                        }
                         
                         if status['error']:
-                            response_parts.append(f"ERROR: {status['error']}")
+                            response_data['error'] = status['error']
                         
-                        return "\n".join(response_parts)
+                        # Convert to JSON string for the response
+                        import json
+                        return json.dumps(response_data, indent=2)
 
                         break
 
