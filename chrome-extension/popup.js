@@ -128,37 +128,44 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Parse the JSON response
-      let displayText = '';
-      
       try {
-        // Add result
-        if (resultData.result !== undefined) {
-          displayText += `RESULT: ${resultData.result}\n\n`;
+        // Create a clean text response
+        let displayText = '';
+        
+        // Check if result is a string that contains JSON
+        let resultObj = resultData;
+        if (typeof resultData.result === 'string') {
+          try {
+            resultObj = JSON.parse(resultData.result);
+          } catch (e) {
+            // If parsing fails, use the original resultData
+            resultObj = resultData;
+          }
         }
         
-        // Add PowerPoint status
-        if (resultData.powerpoint) {
-          displayText += `PPT: ${resultData.powerpoint}\n\n`;
+        // Add each field on a new line with UPPERCASE labels
+        if (resultObj.result !== undefined) {
+          displayText += `RESULT: ${resultObj.result}\n`;
         }
         
-        // Add email status
-        if (resultData.email) {
-          displayText += `EMAIL: ${resultData.email}\n\n`;
+        if (resultObj.powerpoint) {
+          displayText += `PPT: ${resultObj.powerpoint}\n`;
         }
         
-        // Add success status
-        if (resultData.success !== undefined) {
-          displayText += `STATUS: ${resultData.success ? '✅ Success' : '❌ Failed'}\n\n`;
+        if (resultObj.email) {
+          displayText += `EMAIL: ${resultObj.email}\n`;
         }
         
-        // Add error if present
-        if (resultData.error) {
-          displayText += `ERROR: ${resultData.error}\n\n`;
+        // If we didn't find any fields, show the raw response
+        if (displayText === '') {
+          displayText = typeof resultData === 'string' ? resultData : JSON.stringify(resultData, null, 2);
+        } else {
+          // Remove the last newline
+          displayText = displayText.trim();
         }
         
         // Display the formatted text
-        resultDiv.textContent = displayText.trim();
+        resultDiv.textContent = displayText;
         
       } catch (e) {
         console.error('Error formatting response:', e);
