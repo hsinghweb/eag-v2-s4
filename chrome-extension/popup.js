@@ -98,9 +98,24 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Try to parse the response as JSON
       try {
+        // First, try to parse the entire response as JSON
         resultData = JSON.parse(responseText);
+        
+        // If the response is a string that contains JSON, parse that too
+        if (typeof resultData === 'string') {
+          try {
+            const innerJson = JSON.parse(resultData);
+            if (typeof innerJson === 'object' && innerJson !== null) {
+              resultData = innerJson;
+            }
+          } catch (e) {
+            // If inner parse fails, keep the original resultData
+            console.log('Inner JSON parse failed, using as-is');
+          }
+        }
       } catch (e) {
-        // If it's not JSON, handle as plain text
+        console.error('Error parsing JSON:', e);
+        // If it's not valid JSON, display as plain text
         resultDiv.innerHTML = `
           <div class="result-container">
             <div class="query-display">Query: ${query}</div>
@@ -113,95 +128,42 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Create the result container
-      const resultContainer = document.createElement('div');
-      resultContainer.className = 'result-container';
+      // Parse the JSON response
+      let displayText = '';
       
-      // Add the query display
-      const queryDisplay = document.createElement('div');
-      queryDisplay.className = 'query-display';
-      queryDisplay.textContent = `Query: ${query}`;
-      resultContainer.appendChild(queryDisplay);
-      
-      // Format the result value
-      let resultValue = resultData.result || 'No result';
-      if (Array.isArray(resultValue)) {
-        resultValue = resultValue.join(', ');
-      } else if (typeof resultValue === 'object' && resultValue !== null) {
-        // If result is an object, format it as key-value pairs
-        resultValue = Object.entries(resultValue)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join('<br>');
+      try {
+        // Add result
+        if (resultData.result !== undefined) {
+          displayText += `RESULT: ${resultData.result}\n\n`;
+        }
+        
+        // Add PowerPoint status
+        if (resultData.powerpoint) {
+          displayText += `PPT: ${resultData.powerpoint}\n\n`;
+        }
+        
+        // Add email status
+        if (resultData.email) {
+          displayText += `EMAIL: ${resultData.email}\n\n`;
+        }
+        
+        // Add success status
+        if (resultData.success !== undefined) {
+          displayText += `STATUS: ${resultData.success ? '✅ Success' : '❌ Failed'}\n\n`;
+        }
+        
+        // Add error if present
+        if (resultData.error) {
+          displayText += `ERROR: ${resultData.error}\n\n`;
+        }
+        
+        // Display the formatted text
+        resultDiv.textContent = displayText.trim();
+        
+      } catch (e) {
+        console.error('Error formatting response:', e);
+        resultDiv.textContent = 'Error: Could not format the response';
       }
-      
-      // Create the result items
-      let resultHTML = '';
-      
-      // Add result section with improved formatting
-      if (resultData.result !== undefined) {
-        // Format numbers with commas for better readability
-        const formattedResult = typeof resultData.result === 'string' && !isNaN(resultData.result)
-          ? Number(resultData.result).toLocaleString()
-          : resultData.result;
-          
-        resultHTML += `
-          <div class="result-item">
-            <div class="result-label">Result</div>
-            <div class="result-value">${formattedResult}</div>
-          </div>`;
-      }
-      
-      // Add PowerPoint status if available
-      if (resultData.powerpoint) {
-        resultHTML += `
-          <div class="result-item">
-            <div class="result-label">PowerPoint</div>
-            <div class="result-value">
-              <i class="status-icon">${resultData.powerpoint.includes('success') ? '✅' : 'ℹ️'}</i>
-              ${resultData.powerpoint}
-            </div>
-          </div>`;
-      }
-      
-      // Add email status if available
-      if (resultData.email) {
-        resultHTML += `
-          <div class="result-item">
-            <div class="result-label">Email</div>
-            <div class="result-value">
-              <i class="status-icon">${resultData.email.includes('success') ? '✅' : '❌'}</i>
-              ${resultData.email}
-            </div>
-          </div>`;
-      }
-      
-      // Add success status
-      if (resultData.success !== undefined) {
-        resultHTML += `
-          <div class="result-item">
-            <div class="result-label">Status</div>
-            <div class="result-value">
-              <i class="status-icon">${resultData.success ? '✅' : '❌'}</i>
-              ${resultData.success ? 'Operation completed successfully' : 'Operation failed'}
-            </div>
-          </div>`;
-      }
-      
-      // Add error if present
-      if (resultData.error) {
-        resultHTML += `
-          <div class="result-item error">
-            <div class="result-label">Error</div>
-            <div class="result-value">
-              <i class="status-icon">❌</i>
-              ${resultData.error}
-            </div>
-          </div>`;
-      }
-      
-      // Update the DOM
-      resultContainer.innerHTML += resultHTML;
-      resultDiv.appendChild(resultContainer);
       
     } catch (error) {
       console.error('Error:', error);
