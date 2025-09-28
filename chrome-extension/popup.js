@@ -39,11 +39,29 @@ document.addEventListener('DOMContentLoaded', function() {
       const data = await response.json();
       
       if (data.status === 'success') {
-        // Format the result for better readability
-        if (typeof data.result === 'object') {
-          resultDiv.textContent = JSON.stringify(data.result, null, 2);
+        // Display the result
+        if (data.result) {
+          let displayText = data.result;
+          
+          // Clean up the display text
+          if (typeof displayText === 'string') {
+            // Remove any remaining FINAL_ANSWER: prefix and trim
+            displayText = displayText.replace(/^FINAL_ANSWER:/i, '').trim();
+            // Remove any remaining quotes or brackets
+            displayText = displayText.replace(/^["\[\]']+|["\[\]']+$/g, '');
+          }
+          
+          // Set the result with improved formatting
+          resultDiv.innerHTML = `
+            <div style="margin-bottom: 10px; font-weight: bold;">
+              ${queryInput.value}
+            </div>
+            <div style="background: #f0f0f0; padding: 10px; border-radius: 4px;">
+              ${displayText}
+            </div>
+          `;
         } else {
-          resultDiv.textContent = data.result;
+          resultDiv.textContent = 'No result returned';
         }
       } else {
         resultDiv.textContent = `Error: ${data.message || 'Unknown error occurred'}`;

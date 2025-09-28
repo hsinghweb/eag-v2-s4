@@ -293,47 +293,96 @@ async def main(query: str):
 
                     elif response_text.startswith("FINAL_ANSWER:"):
                         logger.info("=== Agent Execution Complete ===")
-                        result = await session.call_tool("open_powerpoint")
-                        logger.info(result.content[0].text)
-
-                        # Wait for PowerPoint to open
-                        await asyncio.sleep(2)
-
-                        # Draw a rectangle
-                        result = await session.call_tool(
-                            "draw_rectangle",
-                            arguments={
-                                "x1": 2,
-                                "y1": 2,
-                                "x2": 7,
-                                "y2": 5
-                            }
-                        )
-                        logger.info(result.content[0].text)
-
-                        # Add text with result
-                        result = await session.call_tool(
-                            "add_text_in_powerpoint",
-                            arguments={
-                                "text": response_text
-                            }
-                        )
-                        logger.info(result.content[0].text)
+                        # Extract just the answer part
+                        final_answer = response_text.split(":", 1)[1].strip()
+                        logger.info(f"Final answer: {final_answer}")
                         
-                        # Send the final result via Gmail
-                        email_content = f"Query: {query}\n\nFinal Result: {response_text}"
-                        result = await session.call_tool(
-                            "send_gmail",
-                            arguments={
-                                "content": email_content
-                            }
-                        )
-                        logger.info(result.content[0].text)
+                        # Create a status dictionary to track all operations
+                        status = {
+                            'final_answer': final_answer,
+                            'powerpoint_status': 'Not started',
+                            'email_status': 'Not started',
+                            'success': True,
+                            'error': None
+                        }
                         
-                        # Close PowerPoint
-                        result = await session.call_tool("close_powerpoint")
-                        logger.info(result.content[0].text)
+                        logger.info("Starting PowerPoint and email operations...")
                         
+                        try:
+                            # PowerPoint Operations
+                            logger.info("Opening PowerPoint...")
+                            result = await session.call_tool("open_powerpoint")
+                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                            status['powerpoint_status'] = 'PowerPoint opened'
+                            
+                            # Wait for PowerPoint to open
+                            await asyncio.sleep(2)
+                            
+                            logger.info("Drawing rectangle in PowerPoint...")
+                            result = await session.call_tool(
+                                "draw_rectangle",
+                                arguments={
+                                    "x1": 2,
+                                    "y1": 2,
+                                    "x2": 7,
+                                    "y2": 5
+                                }
+                            )
+                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                            
+                            logger.info("Adding text to PowerPoint...")
+                            result = await session.call_tool(
+                                "add_text_in_powerpoint",
+                                arguments={
+                                    "text": f"Query: {query}\nResult: {final_answer}"
+                                }
+                            )
+                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                            status['powerpoint_status'] = 'PowerPoint updated with results'
+                            
+                            # Email Operations
+                            logger.info("Sending email...")
+                            email_content = f"Query: {query}\n\nFinal Result: {final_answer}"
+                            result = await session.call_tool(
+                                "send_gmail",
+                                arguments={
+                                    "content": email_content
+                                }
+                            )
+                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                            status['email_status'] = 'Email sent successfully'
+                            
+                            logger.info("Closing PowerPoint...")
+                            result = await session.call_tool("close_powerpoint")
+                            logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
+                            
+                            logger.info("All operations completed successfully")
+                            
+                        except Exception as e:
+                            error_msg = f"Error in operations: {str(e)}"
+                            logger.error(error_msg)
+                            logger.error(traceback.format_exc())
+                            status['success'] = False
+                            status['error'] = error_msg
+                            
+                            # Try to close PowerPoint if it's open
+                            try:
+                                await session.call_tool("close_powerpoint")
+                            except:
+                                pass
+                        
+                        # Format the final response
+                        response_parts = [
+                            f"FINAL_RESULT: {status['final_answer']}",
+                            f"POWERPOINT: {status['powerpoint_status']}",
+                            f"EMAIL: {status['email_status']}"
+                        ]
+                        
+                        if status['error']:
+                            response_parts.append(f"ERROR: {status['error']}")
+                        
+                        return "\n".join(response_parts)
+
                         break
 
                     iteration += 1

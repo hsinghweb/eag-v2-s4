@@ -26,13 +26,24 @@ async def handle_query():
         # Run the AI agent with the query
         result = await ai_main(query)
         
+        # Extract FINAL_ANSWER if present
+        final_answer = None
+        if isinstance(result, str):
+            if 'FINAL_ANSWER:' in result:
+                final_answer = result.split('FINAL_ANSWER:')[-1].strip()
+                # Clean up the answer by removing any remaining brackets or quotes
+                final_answer = final_answer.strip('[]"\'')
+            else:
+                final_answer = result.strip('"\'')
+        
         return jsonify({
             'status': 'success',
-            'result': result
+            'result': final_answer if final_answer is not None else 'No answer found'
         })
         
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({
             'status': 'error',
             'message': str(e)
