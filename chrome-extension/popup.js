@@ -93,7 +93,25 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ query })
       });
 
-      const resultData = await response.json();
+      let responseText = await response.text();
+      let resultData;
+      
+      // Try to parse the response as JSON
+      try {
+        resultData = JSON.parse(responseText);
+      } catch (e) {
+        // If it's not JSON, handle as plain text
+        resultDiv.innerHTML = `
+          <div class="result-container">
+            <div class="query-display">Query: ${query}</div>
+            <div class="result-item">
+              <div class="result-label">Result</div>
+              <div class="result-value">${responseText}</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
       
       // Create the result container
       const resultContainer = document.createElement('div');
@@ -105,36 +123,84 @@ document.addEventListener('DOMContentLoaded', function() {
       queryDisplay.textContent = `Query: ${query}`;
       resultContainer.appendChild(queryDisplay);
       
-      // Add the result items
-      const resultItem = document.createElement('div');
-      resultItem.className = 'result-item';
+      // Format the result value
+      let resultValue = resultData.result || 'No result';
+      if (Array.isArray(resultValue)) {
+        resultValue = resultValue.join(', ');
+      } else if (typeof resultValue === 'object' && resultValue !== null) {
+        // If result is an object, format it as key-value pairs
+        resultValue = Object.entries(resultValue)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('<br>');
+      }
       
-      let resultHTML = `
-        <div class="result-item">
-          <div class="result-label">Result</div>
-          <div class="result-value">${resultData.result || 'No result'}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">PowerPoint Status</div>
-          <div class="result-value">${resultData.powerpoint || 'N/A'}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Email Status</div>
-          <div class="result-value">${resultData.email || 'N/A'}</div>
-        </div>
-      `;
+      // Create the result items
+      let resultHTML = '';
       
+      // Add result section with improved formatting
+      if (resultData.result !== undefined) {
+        // Format numbers with commas for better readability
+        const formattedResult = typeof resultData.result === 'string' && !isNaN(resultData.result)
+          ? Number(resultData.result).toLocaleString()
+          : resultData.result;
+          
+        resultHTML += `
+          <div class="result-item">
+            <div class="result-label">Result</div>
+            <div class="result-value">${formattedResult}</div>
+          </div>`;
+      }
+      
+      // Add PowerPoint status if available
+      if (resultData.powerpoint) {
+        resultHTML += `
+          <div class="result-item">
+            <div class="result-label">PowerPoint</div>
+            <div class="result-value">
+              <i class="status-icon">${resultData.powerpoint.includes('success') ? '✅' : 'ℹ️'}</i>
+              ${resultData.powerpoint}
+            </div>
+          </div>`;
+      }
+      
+      // Add email status if available
+      if (resultData.email) {
+        resultHTML += `
+          <div class="result-item">
+            <div class="result-label">Email</div>
+            <div class="result-value">
+              <i class="status-icon">${resultData.email.includes('success') ? '✅' : '❌'}</i>
+              ${resultData.email}
+            </div>
+          </div>`;
+      }
+      
+      // Add success status
+      if (resultData.success !== undefined) {
+        resultHTML += `
+          <div class="result-item">
+            <div class="result-label">Status</div>
+            <div class="result-value">
+              <i class="status-icon">${resultData.success ? '✅' : '❌'}</i>
+              ${resultData.success ? 'Operation completed successfully' : 'Operation failed'}
+            </div>
+          </div>`;
+      }
+      
+      // Add error if present
       if (resultData.error) {
         resultHTML += `
           <div class="result-item error">
             <div class="result-label">Error</div>
-            <div class="result-value">${resultData.error}</div>
-          </div>
-        `;
+            <div class="result-value">
+              <i class="status-icon">❌</i>
+              ${resultData.error}
+            </div>
+          </div>`;
       }
       
-      resultItem.innerHTML = resultHTML;
-      resultContainer.appendChild(resultItem);
+      // Update the DOM
+      resultContainer.innerHTML += resultHTML;
       resultDiv.appendChild(resultContainer);
       
     } catch (error) {

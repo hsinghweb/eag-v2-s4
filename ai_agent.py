@@ -322,10 +322,10 @@ async def main(query: str):
                             result = await session.call_tool(
                                 "draw_rectangle",
                                 arguments={
-                                    "x1": 2,
-                                    "y1": 2,
-                                    "x2": 7,
-                                    "y2": 5
+                                    "x1": 1,          # Start at left edge (min: 1)
+                                    "y1": 1,          # Start at top edge (min: 1)
+                                    "x2": 8,          # Extend to right edge (max: 8)
+                                    "y2": 6           # Extend down (leaving some space at bottom)
                                 }
                             )
                             logger.info(result.content[0].text if hasattr(result, 'content') else str(result))
