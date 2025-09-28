@@ -322,15 +322,18 @@ async def main(query: str):
                         final_answer = response_text.split(":", 1)[1].strip()
                         logger.info(f"Final answer: {final_answer}")
                         
-                        # Format the response to include the original query and result
-                        formatted_response = f"Query: {query}\nResult: {final_answer}"
+                        # Clean up the final answer by removing any existing Query/Result prefixes and brackets
+                        clean_answer = final_answer.strip('[]')
+                        if clean_answer.startswith('Query:'):
+                            clean_answer = clean_answer.split('Result:')[-1].strip()
                         
-                        # Simple response for the final answer
+                        # Format the response for the Chrome extension
                         response_data = {
-                            'result': formatted_response.strip('[]'),
+                            'result': clean_answer,  # Just the clean answer for the extension
                             'success': True,
                             'query': query,
-                            'answer': final_answer.strip('[]')
+                            'answer': clean_answer,
+                            'full_response': f"Query: {query}\nResult: {clean_answer}"  # Keep full format for other uses
                         }
                         
                         # Convert to JSON string for the response

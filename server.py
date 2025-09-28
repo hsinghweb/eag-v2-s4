@@ -31,19 +31,24 @@ async def handle_query():
                 import json
                 result_data = json.loads(result)
                 if 'result' in result_data:
+                    # Return the clean result for the Chrome extension
                     return jsonify({
                         'status': 'success',
-                        'result': result_data['result']
+                        'result': result_data.get('answer', result_data['result']),
+                        'query': result_data.get('query', '')
                     })
         except json.JSONDecodeError:
             logger.warning("Failed to parse AI agent response as JSON, falling back to string extraction")
             # Fallback to string extraction if JSON parsing fails
             if 'FINAL_ANSWER:' in result:
-                final_answer = result.split('FINAL_ANSWER:')[-1].strip()
-                final_answer = final_answer.strip('[]\'"')
+                final_answer = result.split('FINAL_ANSWER:')[-1].strip('[] \'"')
+                # Clean up any Query/Result prefixes
+                if 'Query:' in final_answer:
+                    final_answer = final_answer.split('Result:')[-1].strip()
                 return jsonify({
                     'status': 'success',
-                    'result': final_answer
+                    'result': final_answer,
+                    'query': ''
                 })
         
         # If we get here, we couldn't extract a proper result
