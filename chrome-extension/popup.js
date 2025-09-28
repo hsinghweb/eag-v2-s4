@@ -8,71 +8,64 @@ document.addEventListener('DOMContentLoaded', function() {
   const style = document.createElement('style');
   style.textContent = `
     .result-container {
-      margin: 8px 0 0 0;
+      margin: 4px 0 0 0;
       padding: 0;
       font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       font-size: 13px;
       line-height: 1.4;
-      text-align: left;
       width: 100%;
     }
     .query-display {
-      margin: 0 0 6px 0;
-      padding: 6px 8px;
+      display: flex;
+      align-items: flex-start;
+      margin: 0 0 4px 0;
+      padding: 4px 6px;
       background: #f0f7ff;
-      border-radius: 3px;
+      border-radius: 2px;
       border-left: 2px solid #4285f4;
       color: #202124;
       font-weight: 500;
-      text-align: left;
       width: 100%;
       box-sizing: border-box;
+      gap: 6px;
     }
     .result-item {
+      display: flex;
+      align-items: flex-start;
       margin: 0;
       padding: 0;
       background: transparent;
-      text-align: left;
       width: 100%;
+      gap: 6px;
     }
     .result-item.error {
       background: #ffebee;
       border-left: 2px solid #f44336;
     }
     .label {
-      display: inline-block;
-      min-width: 50px;
+      flex: 0 0 auto;
       font-weight: 600;
       color: #1a73e8;
-      margin-right: 6px;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.3px;
-      text-align: left;
-      vertical-align: top;
+      padding: 2px 0;
     }
     .result-value {
-      display: inline-block;
-      padding: 6px 8px;
+      flex: 1;
+      padding: 2px 0 2px 6px;
       margin: 0;
-      background: #f8f9fa;
-      border-radius: 3px;
-      border-left: 2px solid #34a853;
       color: #202124;
       font-family: 'Roboto Mono', 'Courier New', monospace;
       font-size: 13px;
       white-space: pre-wrap;
       word-break: break-word;
-      text-align: left;
-      width: calc(100% - 60px);
-      box-sizing: border-box;
-      vertical-align: top;
+      border-left: 2px solid #34a853;
+      padding-left: 6px;
     }
     .result-value-inline {
-      display: inline;
-      padding: 0;
-      background: transparent;
-      border: none;
+      flex: 1;
+      padding: 2px 0;
       color: inherit;
       font-family: inherit;
     }
