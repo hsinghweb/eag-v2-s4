@@ -69,6 +69,12 @@ Important Rules:
 6. Only give FINAL_ANSWER when you have completed all necessary operations.
 7. Do not repeat function calls with the same parameters.
 
+Special Instructions for Email Operations:
+- If the user asks to solve a math problem and send the result by email, you must:
+  a) First, compute the result using the appropriate math tool(s).
+  b) Only after obtaining the result, call 'send_gmail' ONCE with both the original query and the computed result in the email content.
+  c) Never call 'send_gmail' before the result is available, and never call it more than once per user request.
+
 PowerPoint Operations (ONLY use when explicitly requested):
 - Use 'open_powerpoint' to open PowerPoint with a blank presentation
 - Use 'draw_rectangle' to draw a rectangle on the slide (default coordinates: x1=1, y1=1, x2=8, y2=6)
@@ -92,6 +98,7 @@ FUNCTION_CALL: close_powerpoint|
 FINAL_ANSWER: [Query: Add 2 and 3 and show in PowerPoint. Result: 5. The result has been added to PowerPoint.]
 
 User: Add 2 and 3 and email me the result
+FUNCTION_CALL: number_list_to_sum|[2,3]
 FUNCTION_CALL: send_gmail|Query: Add 2 and 3 and email me the result\n\nResult: 2 + 3 = 5
 FINAL_ANSWER: [Query: Add 2 and 3 and email me the result. Result: 5. The result has been sent via email.]
 
@@ -248,13 +255,6 @@ async def main(query: str):
                             logger.debug(f"Tool schema: {tool.inputSchema}")
 
                             # Prepare arguments according to the tool's input schema
-                            arguments = {}
-                            schema_properties = tool.inputSchema.get('properties', {})
-                            logger.debug(f"Schema properties: {schema_properties}")
-
-                            for param_name, param_info in schema_properties.items():
-                                if not params:  # Check if we have enough parameters
-                                    raise ValueError(f"Not enough parameters provided for {func_name}")
                                     
                                 value = params.pop(0)  # Get and remove the first parameter
                                 param_type = param_info.get('type', 'string')

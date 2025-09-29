@@ -1,17 +1,49 @@
-# Math Agent
+# AI Agent with Chrome Extension
 
-A powerful AI-powered mathematical problem solver with a Chrome extension interface.
+A versatile AI assistant that can perform mathematical calculations, create PowerPoint presentations, and send emails through a user-friendly Chrome extension interface.
 
-## Setup Instructions
+## ✨ Features
+
+- **Natural Language Processing**: Ask questions in plain English
+- **Mathematical Calculations**: Solve complex equations and word problems
+- **PowerPoint Integration**: Automatically generate and populate slides with results
+- **Email Notifications**: Send results directly to your email
+- **Clean Interface**: Modern, responsive design with clear query/result separation
+- **Real-time Processing**: Get instant responses to your queries
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Node.js (for development)
+- Google Chrome browser
+- Google Gemini API key
 
 ### 1. Server Setup
 
-1. Install the required Python packages:
+1. Clone the repository:
    ```bash
-   pip install flask flask-cors
+   git clone [your-repository-url]
+   cd eag-v2-s4
    ```
 
-2. Start the server:
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Create a `.env` file with your API key:
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+5. Start the server:
    ```bash
    python server.py
    ```
@@ -22,30 +54,72 @@ A powerful AI-powered mathematical problem solver with a Chrome extension interf
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode" (toggle in the top-right corner)
 3. Click "Load unpacked" and select the `chrome-extension` directory
-4. The Math Agent extension should now appear in your extensions bar
+4. The AI Agent extension should now appear in your extensions bar
 
-### 3. Using the Extension
+## 💡 Usage
 
-1. Click on the Math Agent extension icon in your browser
-2. Enter your math query in the input field
+### Basic Usage
+1. Click on the AI Agent extension icon in your browser
+2. Enter your query in the input field (e.g., "What is 15% of 200?")
 3. Click "Ask" or press Enter
-4. The result will be displayed in the result area
+4. View the formatted result in the popup
 
-## Features
+### Advanced Features
+- **PowerPoint Integration**: 
+  - Ask to "Show [result] in PowerPoint"
+  - The agent will create a slide with your query and result
 
-- Solve complex mathematical problems
-- Natural language processing for queries
-- Clean and simple interface
-- Real-time responses
+- **Email Results**:
+  - Request to "Email me the result"
+  - The agent will send the query and result to your configured email
 
-## Development
+## 🛠 Development
 
-- Server: Python with Flask
-- Frontend: Vanilla JavaScript
-- AI: Google's Gemini API
+### Project Structure
+- `ai_agent.py`: Core AI agent logic and tool integration
+- `server.py`: Flask server for handling requests
+- `mcp-server.py`: MCP server for tool execution
+- `chrome-extension/`: Frontend Chrome extension code
 
-## Troubleshooting
+### Dependencies
+- Backend:
+  - Flask
+  - python-dotenv
+  - google-generativeai
+  - mcp (custom tool server)
 
-- Make sure the server is running before using the extension
-- Check the browser's console for any errors (Right-click > Inspect > Console)
-- Ensure CORS is properly configured if accessing from different domains
+- Frontend:
+  - Vanilla JavaScript
+  - Modern CSS with Flexbox
+
+## 🐛 Troubleshooting
+
+### Common Issues
+1. **Server not starting**:
+   - Check if port 5000 is available
+   - Verify all dependencies are installed
+   - Check the logs in the terminal
+
+2. **Extension not loading**:
+   - Ensure Developer mode is enabled in Chrome
+   - Check for errors in Chrome's extension console
+   - Reload the extension after making changes
+
+3. **API Errors**:
+   - Verify your Gemini API key is correctly set in `.env`
+   - Check your internet connection
+   - Ensure you have sufficient API quota
+
+### Viewing Logs
+- Server logs are output to the terminal where `server.py` is running
+- Chrome extension logs can be viewed in the browser's developer console
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Google Gemini for the AI capabilities
+- Flask for the lightweight server
+- The open-source community for various utilities and libraries
