@@ -255,6 +255,13 @@ async def main(query: str):
                             logger.debug(f"Tool schema: {tool.inputSchema}")
 
                             # Prepare arguments according to the tool's input schema
+                            arguments = {}
+                            schema_properties = tool.inputSchema.get('properties', {})
+                            logger.debug(f"Schema properties: {schema_properties}")
+
+                            for param_name, param_info in schema_properties.items():
+                                if not params:  # Check if we have enough parameters
+                                    raise ValueError(f"Not enough parameters provided for {func_name}")
                                     
                                 value = params.pop(0)  # Get and remove the first parameter
                                 param_type = param_info.get('type', 'string')
